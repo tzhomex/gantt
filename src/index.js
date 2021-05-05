@@ -12,7 +12,8 @@ const VIEW_MODE = {
     DAY: 'Day',
     WEEK: 'Week',
     MONTH: 'Month',
-    YEAR: 'Year'
+    YEAR: 'Year',
+    HOUR: 'Hour'
 };
 
 export default class Gantt {
@@ -97,7 +98,7 @@ export default class Gantt {
             // convert to Date objects
             task._start = date_utils.parse(task.start);
             task._end = date_utils.parse(task.end);
-
+            console.log(task);
             // make task invalid if duration too large
             if (date_utils.diff(task._end, task._start, 'year') > 10) {
                 task.end = null;
@@ -200,6 +201,9 @@ export default class Gantt {
         } else if (view_mode === VIEW_MODE.YEAR) {
             this.options.step = 24 * 365;
             this.options.column_width = 120;
+        } else if (view_mode === VIEW_MODE.HOUR) {
+            this.options.step = 24 / 12;
+            this.options.column_width = 38;
         }
     }
 
@@ -382,6 +386,12 @@ export default class Gantt {
             if (this.view_is(VIEW_MODE.DAY) && date.getDate() === 1) {
                 tick_class += ' thick';
             }
+
+            if (this.view_is(VIEW_MODE.HOUR) && date.getDate() === 1) {
+                tick_class += ' thick';
+                console.log("this is the VIEW_MODE.HOUR for the make_grid_ticks");
+            }
+
             // thick tick for first week
             if (
                 this.view_is(VIEW_MODE.WEEK) &&
@@ -414,7 +424,8 @@ export default class Gantt {
 
     make_grid_highlights() {
         // highlight today's date
-        if (this.view_is(VIEW_MODE.DAY)) {
+        if (this.view_is(VIEW_MODE.DAY) || this.view_is(VIEW_MODE.HOUR)) {
+            console.log("Doing the make_grid_highlights for the HOUR and DAY");
             const x =
                 date_utils.diff(date_utils.today(), this.gantt_start, 'hour') /
                 this.options.step *

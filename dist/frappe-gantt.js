@@ -1035,7 +1035,8 @@ const VIEW_MODE = {
     DAY: 'Day',
     WEEK: 'Week',
     MONTH: 'Month',
-    YEAR: 'Year'
+    YEAR: 'Year',
+    HOUR: 'Hour'
 };
 
 class Gantt {
@@ -1223,6 +1224,9 @@ class Gantt {
         } else if (view_mode === VIEW_MODE.YEAR) {
             this.options.step = 24 * 365;
             this.options.column_width = 120;
+        } else if (view_mode === VIEW_MODE.HOUR) {
+            this.options.step = 24 / 12;
+            this.options.column_width = 75;
         }
     }
 
@@ -1249,6 +1253,9 @@ class Gantt {
 
         // add date padding on both sides
         if (this.view_is([VIEW_MODE.QUARTER_DAY, VIEW_MODE.HALF_DAY])) {
+            this.gantt_start = date_utils.add(this.gantt_start, -7, 'day');
+            this.gantt_end = date_utils.add(this.gantt_end, 7, 'day');
+        } else if (this.view_is(VIEW_MODE.HOUR)) {
             this.gantt_start = date_utils.add(this.gantt_start, -7, 'day');
             this.gantt_end = date_utils.add(this.gantt_end, 7, 'day');
         } else if (this.view_is(VIEW_MODE.MONTH)) {
@@ -1321,7 +1328,7 @@ class Gantt {
         this.make_grid_rows();
         this.make_grid_header();
         this.make_grid_ticks();
-        this.make_grid_highlights();
+        // this.make_grid_highlights();
     }
 
     make_grid_background() {
@@ -1405,6 +1412,11 @@ class Gantt {
             if (this.view_is(VIEW_MODE.DAY) && date.getDate() === 1) {
                 tick_class += ' thick';
             }
+
+            if (this.view_is(VIEW_MODE.HOUR) && date.getDate() === 1) {
+                tick_class += ' thick';
+            }
+
             // thick tick for first week
             if (
                 this.view_is(VIEW_MODE.WEEK) &&
@@ -1437,7 +1449,7 @@ class Gantt {
 
     make_grid_highlights() {
         // highlight today's date
-        if (this.view_is(VIEW_MODE.DAY)) {
+        if (this.view_is(VIEW_MODE.DAY) || this.view_is(VIEW_MODE.HOUR)) {
             const x =
                 date_utils.diff(date_utils.today(), this.gantt_start, 'hour') /
                 this.options.step *
@@ -1463,7 +1475,10 @@ class Gantt {
     }
 
     make_dates() {
-        for (let date of this.get_dates_to_draw()) {
+        let datesToDraw = this.get_dates_to_draw();
+        console.log('datesToDraw');
+        console.log(datesToDraw);
+        for (let date of datesToDraw) {
             createSVG('text', {
                 x: date.lower_x,
                 y: date.lower_y,
@@ -1506,6 +1521,11 @@ class Gantt {
             last_date = date_utils.add(date, 1, 'year');
         }
         const date_text = {
+            Hour_lower: date_utils.format(
+                date,
+                'HH:mm',
+                this.options.language
+            ),
             'Quarter Day_lower': date_utils.format(
                 date,
                 'HH',
@@ -1526,6 +1546,10 @@ class Gantt {
                     : date_utils.format(date, 'D', this.options.language),
             Month_lower: date_utils.format(date, 'MMMM', this.options.language),
             Year_lower: date_utils.format(date, 'YYYY', this.options.language),
+            Hour_upper:
+                date.getDate() !== last_date.getDate()
+                    ? date_utils.format(date, 'D MMM', this.options.language)
+                    : '',
             'Quarter Day_upper':
                 date.getDate() !== last_date.getDate()
                     ? date_utils.format(date, 'D MMM', this.options.language)
@@ -1565,6 +1589,8 @@ class Gantt {
             'Quarter Day_upper': 0,
             'Half Day_lower': this.options.column_width * 2 / 2,
             'Half Day_upper': 0,
+            Hour_lower: this.options.column_width * 12 / 2,
+            Hour_upper: 0,
             Day_lower: this.options.column_width / 2,
             Day_upper: this.options.column_width * 30 / 2,
             Week_lower: 0,
